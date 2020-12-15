@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="MasterJar">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/out/artifacts/MasterJar/MasterJar.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -1,4 +1,3 @@
-
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -9,4 +8,8 @@ public interface StorageServiceInterface extends Remote {
     void LoadFiles(String filename) throws RemoteException;
     boolean sendData(String filename, byte[] data, int len) throws RemoteException;
     LinkedHashMap<String, ArrayList<ResourceInfo>>  getTimeHarMap() throws RemoteException;
+    int getFileCount() throws RemoteException;
+    void process_reducer_data(CombinationProcessingData combinationInfo) throws RemoteException;
+    int getcombinationsStatisticsize() throws RemoteException;
+    void clearCombStatistics()throws RemoteException;
 }

@@ -30,19 +30,27 @@ public class MasterService extends UnicastRemoteObject implements MasterServiceI
 
 
     @Override
-    public LinkedList<CombinationProcessingData> task_combinations(int len) throws RemoteException {
-        boolean taskEnd = false;
-        MapperServiceInterface mapper_rmi = null;
+    public LinkedList<ProcessCombinationModel> task_combinations(int len) throws RemoteException {
+        StorageServiceInterface storageService = null;
+        try{
+            storageService = (StorageServiceInterface) Naming.lookup(storage_rmi_address);
+            storageService.clearCombStatistics();
+        }catch(Exception e){e.printStackTrace();}
+        Thread t = new Thread(()->{
+            MapperServiceInterface mapper_rmi ;
             try{
                 String mapper_rmi_address = arrayMapper.get(0);
                 mapper_rmi = (MapperServiceInterface) Naming.lookup(mapper_rmi_address);
-                taskEnd = mapper_rmi.process_data(len,arrayReducer);
+                mapper_rmi.process_data(len,arrayReducer);
             }catch(Exception e){e.printStackTrace();}
-            while(!taskEnd) {}
-            StorageServiceInterface storageService = null;
-            try{
-                storageService = (StorageServiceInterface) Naming.lookup(storage_rmi_address);
-            }catch(Exception e){e.printStackTrace();}
+        });
+            t.start();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         return storageService.getcombinationsStatistic();
     }
 

@@ -2,34 +2,30 @@
 
 import com.google.common.base.CharMatcher;
 
-import java.rmi.Naming;
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
 
 public class MasterMain {
    private static MasterServiceInterface finalMasterService = null;
-    private static ArrayList<String> arrayMapper;
+   private static ArrayList<String> arrayMapper;
    private static ArrayList<String> arrayReducer  = new ArrayList<>();
     public static void main(String[] args) throws InterruptedException {
-       new Thread(){
-           public void run(){
-               try{
-                    arrayMapper = new ArrayList<>();
-                   String portMapper1 = "rmi://localhost:8022/mapperservice";
-                   MapperMain.main(new String[]{"8022"});
-                   arrayMapper.add(portMapper1);
+        new Thread(() -> {
+           try{
+                arrayMapper = new ArrayList<>();
+               String portMapper1 = "rmi://localhost:8022/mapperservice";
+           //    MapperMain.main(new String[]{"8022"});
+               arrayMapper.add(portMapper1);
 
-                  // arrayReducer.add("rmi://localhost:9000/reducerservice"); // fail test reducer (manual launched)
-                   for (int portReducer = 9001 ; portReducer < 9010;portReducer++ ) {
-                       String portReducer_string = "rmi://localhost:"+portReducer+"/reducerservice";
-                       ReducerMain.main(new String[]{String.valueOf(portReducer)});
-                       arrayReducer.add(portReducer_string);
-                   }
-               }catch(Exception e){e.printStackTrace();}
-           }
-       }.start();
+               arrayReducer.add("rmi://localhost:9000/reducerservice"); // fail test reducer (manual launched)
+               for (int portReducer = 9001 ; portReducer < 9009;portReducer++ ) {
+                   String portReducer_string = "rmi://localhost:"+portReducer+"/reducerservice";
+                   ReducerMain.main(new String[]{String.valueOf(portReducer)});
+                   arrayReducer.add(portReducer_string);
+               }
+           }catch(Exception e){e.printStackTrace();}
+       }).start();
         Thread.sleep(1000); // garante que todos os serviços estão disponíveis antes de executar o código do cliente
 
         System.out.println("MASTER DEBUG : Nª Reducers = " + arrayReducer.size());
@@ -45,8 +41,8 @@ public class MasterMain {
             finalMasterService = new MasterService(arrayReducer,arrayMapper);
             r.rebind("masterservice", finalMasterService);
             System.out.println("Master ready port:" +port);
+
             Thread.sleep(4000); // garante que todos os serviços estão disponíveis antes de executar o código do cliente
-            finalMasterService.task_combinations(3);
         }catch(Exception e) {
             System.out.println("Master main " + e.getMessage());
         }
@@ -62,16 +58,18 @@ public class MasterMain {
         MapperServiceInterface mapper_rmi = null;
 
 
-        Thread threadMain = new Thread(()->{
+        Thread threadHearthbeat = new Thread(()->{
             while(true){
                 try {
-                    Thread.sleep(15*1000);
+                    Thread.sleep(13*1000);
                     ArrayList<String> revive_mapper = finalMasterService.heartbeat_revive("mapper");
                     System.out.println("Master: mappers to revive ="+revive_mapper.size());
                     for(String mapperToRevive : revive_mapper){
-                        System.out.println("Master: Revived Mapper["+mapperToRevive+"]");
-                        MapperMain.main(new String[]{mapperToRevive});
+                        String mapperID = CharMatcher.inRange('0','9').retainFrom(mapperToRevive);
+                        System.out.println("Master: Revived Mapper["+mapperID+"]");
+                        MapperMain.main(new String[]{mapperID});
                     }
+                    Thread.sleep(2*1000);
                     ArrayList<String> revive_reducer = finalMasterService.heartbeat_revive("reducer");
                     System.out.println("Master: Reducers to revive ="+revive_reducer.size());
                     for (String reducerToRevive : revive_reducer){
@@ -83,6 +81,6 @@ public class MasterMain {
                 } catch (Exception e) {e.printStackTrace();}
             }
         });
-        threadMain.start();
+        threadHearthbeat.start();
     }
 }

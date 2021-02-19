@@ -4,5 +4,5 @@ import java.util.ArrayList;
 
 public interface MapperServiceInterface extends Remote {
     boolean process_data(int len,ArrayList<String> arrayReducer) throws RemoteException;
-    void redo_taskReducer(String reducerAdress) throws RemoteException;
+    void redo_taskReducer(String reducerAddress) throws RemoteException;
 }
